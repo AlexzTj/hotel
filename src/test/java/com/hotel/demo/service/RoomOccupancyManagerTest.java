@@ -7,9 +7,11 @@ import com.hotel.demo.dto.RoomOccupancyReport;
 import com.hotel.demo.model.Customer;
 import com.hotel.demo.repository.CustomerRepository;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -46,12 +48,68 @@ class RoomOccupancyManagerTest {
 
     @ParameterizedTest
     @MethodSource("testData")
-    void generateReport(int premiumRoomsCount, int economyRoomsCount, RoomOccupancyReport expectedReport) {
-        RoomOccupancyReport roomOccupancyReport = target.generateReport(RoomData.builder()
+    void occupy(int premiumRoomsCount, int economyRoomsCount, RoomOccupancyReport expectedReport) {
+        RoomOccupancyReport roomOccupancyReport = target.occupy(RoomData.builder()
             .economyRoomsCount(economyRoomsCount)
             .premiumRoomsCount(premiumRoomsCount)
             .build());
 
         assertThat(roomOccupancyReport).usingRecursiveComparison().isEqualTo(expectedReport);
+    }
+
+    @Test
+    void givenAllBidsAreLowAndAllRoomsArePremium_whenOccupy_thenUpgradeAll() {
+        when(customerRepository.findAll()).thenReturn(
+            Stream.of(50)
+                .map(BigDecimal::new)
+                .map(Customer::of)
+                .collect(Collectors.toList()));
+        RoomOccupancyReport roomOccupancyReport = target.occupy(RoomData.builder()
+            .economyRoomsCount(0)
+            .premiumRoomsCount(1)
+            .build());
+
+        assertThat(roomOccupancyReport).usingRecursiveComparison().isEqualTo(RoomOccupancyReport.of(1L, BigDecimal.valueOf(50), 0L, BigDecimal.valueOf(0)));
+    }
+
+    @Test
+    void givenAllBidsAreHighAndAllRoomsAreEconomy_whenOccupy_thenOccupyNone() {
+        when(customerRepository.findAll()).thenReturn(
+            Stream.of(1000)
+                .map(BigDecimal::new)
+                .map(Customer::of)
+                .collect(Collectors.toList()));
+        RoomOccupancyReport roomOccupancyReport = target.occupy(RoomData.builder()
+            .economyRoomsCount(1)
+            .premiumRoomsCount(0)
+            .build());
+
+        assertThat(roomOccupancyReport).usingRecursiveComparison().isEqualTo(RoomOccupancyReport.of(0L, BigDecimal.valueOf(0), 0L, BigDecimal.valueOf(0)));
+    }
+
+    @Test
+    void givenCustomersAndNoRooms_whenOccupy_thenOccupyNone() {
+        when(customerRepository.findAll()).thenReturn(
+            Stream.of(1000)
+                .map(BigDecimal::new)
+                .map(Customer::of)
+                .collect(Collectors.toList()));
+        RoomOccupancyReport roomOccupancyReport = target.occupy(RoomData.builder()
+            .economyRoomsCount(0)
+            .premiumRoomsCount(0)
+            .build());
+
+        assertThat(roomOccupancyReport).usingRecursiveComparison().isEqualTo(RoomOccupancyReport.of(0L, BigDecimal.valueOf(0), 0L, BigDecimal.valueOf(0)));
+    }
+
+    @Test
+    void givenRoomsAndNoCustomers_whenOccupy_thenOccupyNone() {
+        when(customerRepository.findAll()).thenReturn(new ArrayList<>());
+        RoomOccupancyReport roomOccupancyReport = target.occupy(RoomData.builder()
+            .economyRoomsCount(10)
+            .premiumRoomsCount(10)
+            .build());
+
+        assertThat(roomOccupancyReport).usingRecursiveComparison().isEqualTo(RoomOccupancyReport.of(0L, BigDecimal.valueOf(0), 0L, BigDecimal.valueOf(0)));
     }
 }

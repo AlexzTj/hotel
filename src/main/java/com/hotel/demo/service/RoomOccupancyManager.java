@@ -22,7 +22,7 @@ public class RoomOccupancyManager {
 
     private final CustomerRepository customerRepository;
 
-    public RoomOccupancyReport generateReport(RoomData roomData) {
+    public RoomOccupancyReport occupy(RoomData roomData) {
         List<Room> premiumRooms = Stream.generate(() -> Room.builder().type(RoomType.PREMIUM).build())
             .limit(roomData.getPremiumRoomsCount())
             .collect(Collectors.toList());
@@ -36,7 +36,7 @@ public class RoomOccupancyManager {
         Iterator<Customer> customerIterator = customers.iterator();
 
         fillRooms(premiumRoomIterator, economyRoomIterator, customerIterator);
-        upgradeRooms(premiumRooms, economyRooms, customerIterator);
+        upgradeRooms(premiumRooms, economyRooms, customers);
 
         return RoomOccupancyReport.of(
             premiumRooms.stream().filter(Room::isOccupied).count(),
@@ -50,30 +50,40 @@ public class RoomOccupancyManager {
 
     private void fillRooms(Iterator<Room> premiumRoomIterator, Iterator<Room> economyRoomIterator, Iterator<Customer> customerIterator) {
         while (customerIterator.hasNext()) {
-            if (!economyRoomIterator.hasNext()) {
+            if (!economyRoomIterator.hasNext() && !premiumRoomIterator.hasNext()) {
                 break;
             }
             Customer customer = customerIterator.next();
-            if (customer.hasPremiumBid() && premiumRoomIterator.hasNext()) {
-                premiumRoomIterator.next().occupy(customer);
-                continue;
-            }
             if (!customer.hasPremiumBid() && economyRoomIterator.hasNext()) {
                 economyRoomIterator.next().occupy(customer);
+                customerIterator.remove();
+                continue;
             }
+            if (customer.hasPremiumBid() && premiumRoomIterator.hasNext()) {
+                premiumRoomIterator.next().occupy(customer);
+                customerIterator.remove();
+            }
+
         }
     }
 
-    private void upgradeRooms(List<Room> premiumRooms, List<Room> economyRooms, Iterator<Customer> customerBidIterator) {
-        Iterator<Room> economyRoomIterator;
+    private void upgradeRooms(List<Room> premiumRooms, List<Room> economyRooms, List<Customer> customers) {
         Collections.reverse(economyRooms);
-        economyRoomIterator = economyRooms.iterator();
-        Optional<Room> premiumRoom;
-        for (premiumRoom = premiumRooms.stream().filter(e -> !e.isOccupied()).findFirst(); premiumRoom.isPresent() && customerBidIterator.hasNext() && economyRoomIterator.hasNext(); ) {
-            Room economyRoom = economyRoomIterator.next();
-            Customer nextCustomerBid = customerBidIterator.next();
-            premiumRoom.get().occupy(economyRoom.getCustomerBid());
-            economyRoom.occupy(nextCustomerBid);
+        Iterator<Room> economyRoomIterator = economyRooms.iterator();
+        Iterator<Customer> customerIterator = customers.iterator();
+        Optional<Room> premiumRoom = premiumRooms.stream().filter(e -> !e.isOccupied()).findFirst();
+        for (; premiumRoom.isPresent() && customerIterator.hasNext(); premiumRoom = premiumRooms.stream().filter(e -> !e.isOccupied()).findFirst()) {
+            if (economyRooms.isEmpty()) {
+                //upgrade low bids to premium rooms
+                Customer nextCustomer = customerIterator.next();
+                premiumRoom.get().occupy(nextCustomer);
+            } else if (economyRoomIterator.hasNext()) {
+                //upgrade from economy to premium
+                Room economyRoom = economyRoomIterator.next();
+                Customer nextCustomerBid = customerIterator.next();
+                premiumRoom.get().occupy(economyRoom.getCustomerBid());
+                economyRoom.occupy(nextCustomerBid);
+            }
         }
     }
 }
