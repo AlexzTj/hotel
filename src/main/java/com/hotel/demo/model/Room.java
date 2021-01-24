@@ -8,5 +8,10 @@ public class Room {
 
     private RoomType type;
     private boolean occupied;
-    private CustomerBid customerBid;
+    private Customer customerBid;
+
+    public void occupy(Customer bid) {
+        this.occupied = true;
+        this.customerBid = bid;
+    }
 }

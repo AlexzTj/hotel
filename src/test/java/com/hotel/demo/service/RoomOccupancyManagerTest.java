@@ -4,8 +4,8 @@ import static org.mockito.Mockito.when;
 
 import com.hotel.demo.dto.RoomData;
 import com.hotel.demo.dto.RoomOccupancyReport;
-import com.hotel.demo.model.CustomerBid;
-import com.hotel.demo.repository.CustomerBidRepository;
+import com.hotel.demo.model.Customer;
+import com.hotel.demo.repository.CustomerRepository;
 import java.math.BigDecimal;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,7 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class RoomOccupancyManagerTest {
 
     @Mock
-    private CustomerBidRepository customerBidRepository;
+    private CustomerRepository customerRepository;
     @InjectMocks
     private RoomOccupancyManager target;
 
@@ -37,10 +37,10 @@ class RoomOccupancyManagerTest {
 
     @BeforeEach
     void setUp() {
-        when(customerBidRepository.findAll()).thenReturn(
+        when(customerRepository.findAll()).thenReturn(
             Stream.of(23, 45, 155, 374, 22, 99, 100, 101, 115, 209)
                 .map(BigDecimal::new)
-                .map(CustomerBid::of)
+                .map(Customer::of)
                 .collect(Collectors.toList()));
     }
 
