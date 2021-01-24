@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 public class PremiumRoomReport extends RoomReport {
 
-    PremiumRoomReport(BigDecimal expectedRevenue, Integer usage) {
+    PremiumRoomReport(BigDecimal expectedRevenue, Long usage) {
         super(expectedRevenue, usage);
     }
 }

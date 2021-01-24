@@ -8,5 +8,5 @@ import lombok.Data;
 public class RoomReport {
 
     private BigDecimal expectedRevenue;
-    private Integer usage;
+    private Long usage;
 }

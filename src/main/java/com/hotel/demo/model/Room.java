@@ -7,4 +7,6 @@ import lombok.Data;
 public class Room {
 
     private RoomType type;
+    private boolean occupied;
+    private CustomerBid customerBid;
 }

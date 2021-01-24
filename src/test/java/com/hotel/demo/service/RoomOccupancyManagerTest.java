@@ -5,14 +5,8 @@ import static org.mockito.Mockito.when;
 import com.hotel.demo.dto.RoomData;
 import com.hotel.demo.dto.RoomOccupancyReport;
 import com.hotel.demo.model.CustomerBid;
-import com.hotel.demo.model.Room;
-import com.hotel.demo.model.RoomType;
 import com.hotel.demo.repository.CustomerBidRepository;
-import com.hotel.demo.repository.RoomRepository;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,17 +23,15 @@ class RoomOccupancyManagerTest {
 
     @Mock
     private CustomerBidRepository customerBidRepository;
-    @Mock
-    private RoomRepository roomRepository;
     @InjectMocks
     private RoomOccupancyManager target;
 
     private static Stream<Arguments> testData() {
         return Stream.of(
-            Arguments.of(3, 3, RoomOccupancyReport.of(3, BigDecimal.valueOf(738), 3, BigDecimal.valueOf(167))),
-            Arguments.of(7, 5, RoomOccupancyReport.of(6, BigDecimal.valueOf(1054), 4, BigDecimal.valueOf(189))),
-            Arguments.of(2, 7, RoomOccupancyReport.of(2, BigDecimal.valueOf(583), 4, BigDecimal.valueOf(189))),
-            Arguments.of(7, 1, RoomOccupancyReport.of(7, BigDecimal.valueOf(1153), 1, BigDecimal.valueOf(45)))
+            Arguments.of(3, 3, RoomOccupancyReport.of(3L, BigDecimal.valueOf(738), 3L, BigDecimal.valueOf(167))),
+            Arguments.of(7, 5, RoomOccupancyReport.of(6L, BigDecimal.valueOf(1054), 4L, BigDecimal.valueOf(189))),
+            Arguments.of(2, 7, RoomOccupancyReport.of(2L, BigDecimal.valueOf(583), 4L, BigDecimal.valueOf(189))),
+            Arguments.of(7, 1, RoomOccupancyReport.of(7L, BigDecimal.valueOf(1153), 1L, BigDecimal.valueOf(45)))
         );
     }
 
@@ -55,11 +47,6 @@ class RoomOccupancyManagerTest {
     @ParameterizedTest
     @MethodSource("testData")
     void generateReport(int premiumRoomsCount, int economyRoomsCount, RoomOccupancyReport expectedReport) {
-        List<Room> premiumRooms = Collections.nCopies(premiumRoomsCount, Room.builder().type(RoomType.PREMIUM).build());
-        List<Room> economyRooms = Collections.nCopies(premiumRoomsCount, Room.builder().type(RoomType.ECONOMY).build());
-        List<Room> allRooms = new ArrayList<>(premiumRooms);
-        allRooms.addAll(economyRooms);
-        when(roomRepository.findAll()).thenReturn(allRooms);
         RoomOccupancyReport roomOccupancyReport = target.generateReport(RoomData.builder()
             .economyRoomsCount(economyRoomsCount)
             .premiumRoomsCount(premiumRoomsCount)

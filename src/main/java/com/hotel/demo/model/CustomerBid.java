@@ -7,9 +7,13 @@ import lombok.Data;
 @Builder
 public class CustomerBid {
 
-    private BigDecimal amount;
+    private final BigDecimal amount;
 
     public static CustomerBid of(BigDecimal amount) {
         return CustomerBid.builder().amount(amount).build();
+    }
+
+    public boolean isPremiumBid() {
+        return amount.compareTo(BigDecimal.valueOf(100)) >= 0;
     }
 }
