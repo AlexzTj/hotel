@@ -14,8 +14,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RoomOccupancyManager {
@@ -23,6 +25,7 @@ public class RoomOccupancyManager {
     private final CustomerRepository customerRepository;
 
     public RoomOccupancyReport occupy(RoomData roomData) {
+        log.info("Received room data to occupy:{}", roomData);
         List<Room> premiumRooms = Stream.generate(() -> Room.builder().type(RoomType.PREMIUM).build())
             .limit(roomData.getPremiumRoomsCount())
             .collect(Collectors.toList());
@@ -38,7 +41,7 @@ public class RoomOccupancyManager {
         fillRooms(premiumRoomIterator, economyRoomIterator, customerIterator);
         upgradeRooms(premiumRooms, economyRooms, customers);
 
-        return RoomOccupancyReport.of(
+        RoomOccupancyReport occupancyReport = RoomOccupancyReport.of(
             premiumRooms.stream().filter(Room::isOccupied).count(),
             premiumRooms.stream().filter(Room::isOccupied)
                 .map(Room::getCustomerBid).map(Customer::getBid).reduce(BigDecimal.ZERO, BigDecimal::add),
@@ -46,6 +49,8 @@ public class RoomOccupancyManager {
             economyRooms.stream().filter(Room::isOccupied)
                 .map(Room::getCustomerBid).map(Customer::getBid).reduce(BigDecimal.ZERO, BigDecimal::add)
         );
+        log.info("Optimization result:{}", occupancyReport);
+        return occupancyReport;
     }
 
     private void fillRooms(Iterator<Room> premiumRoomIterator, Iterator<Room> economyRoomIterator, Iterator<Customer> customerIterator) {
